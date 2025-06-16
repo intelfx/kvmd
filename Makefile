@@ -1,6 +1,8 @@
 -include config.mk
 
 TESTENV_IMAGE ?= kvmd-testenv
+TESTENV_IMAGE_TAG = $(TESTENV_IMAGE):latest
+
 TESTENV_HID ?= /dev/ttyS10
 TESTENV_VIDEO ?= /dev/video0
 TESTENV_GPIO ?= /dev/gpiochip0
@@ -14,6 +16,7 @@ USTREAMER_MIN_VERSION ?= $(shell grep -o 'ustreamer>=[^"]\+' PKGBUILD | sed 's/u
 DEFAULT_PLATFORM ?= v2-hdmi-rpi4
 
 DOCKER ?= docker
+DOCKER_BUILD ?= build
 
 
 # =====
@@ -48,17 +51,16 @@ all:
 
 
 testenv:
-	$(DOCKER) build \
+	$(DOCKER) $(DOCKER_BUILD) \
 			$(if $(call optbool,$(NC)),--no-cache,) \
-			--rm \
-			--tag $(TESTENV_IMAGE) \
+			--tag $(TESTENV_IMAGE_TAG) \
 			--build-arg LIBGPIOD_VERSION=$(LIBGPIOD_VERSION) \
 			--build-arg USTREAMER_MIN_VERSION=$(USTREAMER_MIN_VERSION) \
 		-f testenv/Dockerfile .
 	test -d testenv/.ssl || $(DOCKER) run --rm \
 			--volume `pwd`:/src:ro \
 			--volume `pwd`/testenv:/src/testenv:rw \
-		-t $(TESTENV_IMAGE) bash -c " \
+		-t $(TESTENV_IMAGE_TAG) bash -c " \
 			groupadd kvmd-nginx \
 			&& groupadd kvmd-vnc \
 			&& /src/scripts/kvmd-gencert --do-the-thing \
@@ -80,7 +82,7 @@ tox: testenv
 			--volume `pwd`/extras:/usr/share/kvmd/extras:ro \
 			--volume `pwd`/configs:/usr/share/kvmd/configs.default:ro \
 			--volume `pwd`/contrib/keymaps:/usr/share/kvmd/keymaps:ro \
-		-t $(TESTENV_IMAGE) bash -c " \
+		-t $(TESTENV_IMAGE_TAG) bash -c " \
 			cp -a /src/testenv/.ssl/nginx /etc/kvmd/nginx/ssl \
 			&& cp -a /src/testenv/.ssl/vnc /etc/kvmd/vnc/ssl \
 			&& cp /src/testenv/platform /usr/share/kvmd \
@@ -119,10 +121,10 @@ run: testenv $(TESTENV_GPIO)
 			$(if $(TESTENV_RELAY),--device $(TESTENV_RELAY):$(TESTENV_RELAY),) \
 			--publish 8080:8080/tcp \
 			--publish 4430:4430/tcp \
-		-it $(TESTENV_IMAGE) /bin/bash -c " \
+		-it $(TESTENV_IMAGE_TAG) /bin/bash -c " \
 			mkdir -p /tmp/kvmd-nginx \
 			&& mount -t debugfs none /sys/kernel/debug \
-			&& test -d /sys/kernel/debug/gpio-mockup/`basename $(TESTENV_GPIO)`/ || (echo \"Missing GPIO mockup\" && exit 1) \
+			&& test -d /sys/kernel/debug/gpio-mockup/$(notdir $(TESTENV_GPIO))/ || (echo \"Missing GPIO mockup\" && exit 1) \
 			&& (socat PTY,link=$(TESTENV_HID) PTY,link=/dev/ttyS11 &) \
 			&& cp -r /usr/share/kvmd/configs.default/nginx/* /etc/kvmd/nginx \
 			&& cp -a /testenv/.ssl/nginx /etc/kvmd/nginx/ssl \
@@ -152,7 +154,7 @@ run-cfg: testenv
 			--volume `pwd`/extras:/usr/share/kvmd/extras:ro \
 			--volume `pwd`/configs:/usr/share/kvmd/configs.default:ro \
 			--volume `pwd`/contrib/keymaps:/usr/share/kvmd/keymaps:ro \
-		-it $(TESTENV_IMAGE) /bin/bash -c " \
+		-it $(TESTENV_IMAGE_TAG) /bin/bash -c " \
 			cp -a /testenv/.ssl/nginx /etc/kvmd/nginx/ssl \
 			&& cp -a /testenv/.ssl/vnc /etc/kvmd/vnc/ssl \
 			&& cp /testenv/platform /usr/share/kvmd \
@@ -176,7 +178,7 @@ run-ipmi: testenv
 			--volume `pwd`/configs:/usr/share/kvmd/configs.default:ro \
 			--volume `pwd`/contrib/keymaps:/usr/share/kvmd/keymaps:ro \
 			--publish 6230:623/udp \
-		-it $(TESTENV_IMAGE) /bin/bash -c " \
+		-it $(TESTENV_IMAGE_TAG) /bin/bash -c " \
 			cp -a /testenv/.ssl/nginx /etc/kvmd/nginx/ssl \
 			&& cp -a /testenv/.ssl/vnc /etc/kvmd/vnc/ssl \
 			&& cp /testenv/platform /usr/share/kvmd \
@@ -201,7 +203,7 @@ run-vnc: testenv
 			--volume `pwd`/configs:/usr/share/kvmd/configs.default:ro \
 			--volume `pwd`/contrib/keymaps:/usr/share/kvmd/keymaps:ro \
 			--publish 5900:5900/tcp \
-		-it $(TESTENV_IMAGE) /bin/bash -c " \
+		-it $(TESTENV_IMAGE_TAG) /bin/bash -c " \
 			cp -a /testenv/.ssl/nginx /etc/kvmd/nginx/ssl \
 			&& cp -a /testenv/.ssl/vnc /etc/kvmd/vnc/ssl \
 			&& cp /testenv/platform /usr/share/kvmd \
@@ -222,7 +224,7 @@ regen: keymap pug
 keymap: testenv
 	$(DOCKER) run --user `id -u`:`id -g` --rm \
 		--volume `pwd`:/src \
-	-it $(TESTENV_IMAGE) bash -c "cd src \
+	-it $(TESTENV_IMAGE_TAG) bash -c "cd src \
 		&& ./genmap.py keymap.csv kvmd/keyboard/mappings.py.mako kvmd/keyboard/mappings.py \
 		&& ./genmap.py keymap.csv hid/arduino/lib/drivers/usb-keymap.h.mako hid/arduino/lib/drivers/usb-keymap.h \
 		&& ./genmap.py keymap.csv hid/arduino/lib/drivers-avr/ps2/keymap.h.mako hid/arduino/lib/drivers-avr/ps2/keymap.h \
@@ -233,7 +235,7 @@ keymap: testenv
 pug: testenv
 	$(DOCKER) run --user `id -u`:`id -g` --rm \
 		--volume `pwd`:/src \
-	-it $(TESTENV_IMAGE) bash -c "cd src \
+	-it $(TESTENV_IMAGE_TAG) bash -c "cd src \
 		&& pug --pretty web/index.pug -o web \
 		&& pug --pretty web/login/index.pug -o web/login \
 		&& pug --pretty web/kvm/index.pug -o web/kvm \
@@ -273,7 +275,7 @@ clean-all: testenv clean
 	make -C hid/pico clean-all
 	- $(DOCKER) run --rm \
 			--volume `pwd`:/src \
-		-it $(TESTENV_IMAGE) bash -c "cd src && rm -rf testenv/{.ssl,.tox,.mypy_cache,.coverage}"
+		-it $(TESTENV_IMAGE_TAG) bash -c "cd src && rm -rf testenv/{.ssl,.tox,.mypy_cache,.coverage}"
 
 
 .PHONY: testenv
