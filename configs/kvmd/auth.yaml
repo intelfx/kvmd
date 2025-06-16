@@ -1,1 +1,15 @@
-{}
+oauth:
+  enabled: true
+  providers:
+    authentik:
+      type: oauth2
+      client_id: jCKraAToycCmZ6pdFXoDdXODKfV0HIJyj7ZZamiZ
+      client_secret: RpWIRpyNIcaBrBkElzyHfu0GoahCDn3TZOVJUvJ1nXbZjCFSHl5Vw1aosnqVHKVNUtLzR5CYxxzBUqU8mZSkQbRsbkQD9FoRkhyXRJtKtUUifdXxfsCqfm80HTEHT5h6
+      base_url: http://authentik-server-1.dns.podman:9000/
+      access_token_url: http://authentik-server-1.dns.podman:9000/application/o/token/
+      authorize_url: http://authentik-server-1.dns.podman:9000/application/o/authorize/
+      user_info_url: http://authentik-server-1.dns.podman:9000/application/o/userinfo/
+      long_name: Authentik
+      short_name: authentik
+      scope: profile openid email
+      username_attribute: preferred_username
