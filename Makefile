@@ -114,7 +114,7 @@ gpio: $(TESTENV_GPIO_MODULE)
 
 
 .NOTPARALLEL: run
-run: testenv gpio
+run: gpio
 	- $(DOCKER) run --rm --name kvmd \
 			--ipc=shareable \
 			--privileged \
@@ -129,8 +129,7 @@ run: testenv gpio
 			--device $(TESTENV_VIDEO):$(TESTENV_VIDEO) \
 			--device $(TESTENV_GPIO):$(TESTENV_GPIO) \
 			$(if $(TESTENV_RELAY),--device $(TESTENV_RELAY):$(TESTENV_RELAY),) \
-			--publish 8080:8080/tcp \
-			--publish 4430:4430/tcp \
+			--net lab1 \
 		-it $(TESTENV_IMAGE) /bin/bash -c " \
 			mkdir -p /tmp/kvmd-nginx \
 			&& mount -t debugfs none /sys/kernel/debug \
