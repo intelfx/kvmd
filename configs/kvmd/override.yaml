@@ -38,3 +38,22 @@
 #    auth:
 #        vncauth:
 #            enabled: true # Enable auth via /etc/kvmd/vncpasswd
+
+kvmd:
+    auth:
+        flows:
+            oauth:
+                enabled: true
+                providers:
+                    authentik:
+                        type: oauth2
+                        client_id: ufpsj6ch2g8azDPJC2kQi4z4rU6rgHjEPBtI6O2C
+                        client_secret: 6dMNU62BRd7PZvCdxYBSfekfGURpxSzUepAeNT8fuhmB7lGoTD2wmnZupZLjyM7tbYxzFM8LidPfWwwh3eQSLSR4FXzb0i5gzwOfmvJchCVTAXcmFiHp9n7rvHz7iv39
+                        base_url: http://authentik-server-1.dns.podman:9000/
+                        access_token_url: http://authentik-server-1.dns.podman:9000/application/o/token/
+                        authorize_url: http://authentik-server-1.dns.podman:9000/application/o/authorize/
+                        user_info_url: http://authentik-server-1.dns.podman:9000/application/o/userinfo/
+                        long_name: Authentik
+                        short_name: authentik
+                        scope: profile openid email
+                        username_attribute: preferred_username
