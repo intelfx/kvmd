@@ -35,6 +35,7 @@ from .. import tools
 
 from ..plugins import UnknownPluginError
 from ..plugins.auth import get_auth_service_class
+from ..plugins.auth import get_oauth_service_class
 from ..plugins.hid import get_hid_class
 from ..plugins.atx import get_atx_class
 from ..plugins.msd import get_msd_class
@@ -308,6 +309,10 @@ def _patch_dynamic_kvmd_auth(raw_config: dict, config: Section, scheme: dict) ->
         scheme["kvmd"]["auth"]["external"].update(
             get_auth_service_class(config.kvmd.auth.external.type).get_plugin_options()
         )
+    if config.kvmd.auth.oauth.enabled:
+        for provider, data in tools.rget(raw_config, "kvmd", "auth", "oauth", "providers").items():
+            scheme["kvmd"]["auth"]["oauth"]["providers"][provider] = get_oauth_service_class(data["type"]).get_plugin_options()
+            scheme["kvmd"]["auth"]["oauth"]["providers"][provider]["type"] = Option(data["type"])
 
 
 def _patch_dynamic_kvmd_gpio(raw_config: dict, _: Section, scheme: dict) -> None:
@@ -407,6 +412,13 @@ def _get_config_scheme() -> dict:
                 "external": {
                     "type": Option("", type=valid_stripped_string),
                     # Dynamic content
+                },
+
+                "oauth": {
+                    "enabled": Option(False, type=valid_bool),
+                    "providers": {
+                        # Dynamic content
+                    }
                 },
 
                 "totp": {
