@@ -35,7 +35,7 @@ from .. import tools
 
 from ..plugins import UnknownPluginError
 from ..plugins.auth import get_auth_service_class
-from ..plugins.auth import get_oauth_service_class
+from ..plugins.oauth import get_oauth_provider_class
 from ..plugins.hid import get_hid_class
 from ..plugins.atx import get_atx_class
 from ..plugins.msd import get_msd_class
@@ -310,9 +310,13 @@ def _patch_dynamic_kvmd_auth(raw_config: dict, config: Section, scheme: dict) ->
             get_auth_service_class(config.kvmd.auth.external.type).get_plugin_options()
         )
     if config.kvmd.auth.oauth.enabled:
-        for provider, data in tools.rget(raw_config, "kvmd", "auth", "oauth", "providers").items():
-            scheme["kvmd"]["auth"]["oauth"]["providers"][provider] = get_oauth_service_class(data["type"]).get_plugin_options()
-            scheme["kvmd"]["auth"]["oauth"]["providers"][provider]["type"] = Option(data["type"])
+        for (provider, params) in tools.rget(raw_config, "kvmd", "auth", "oauth", "providers").items():
+            provider_type = valid_stripped_string_not_empty(params.get("type", "oauth2")
+            provider_class = get_oauth_provider_class(provider_type)
+            scheme["kvmd"]["auth"]["oauth"]["providers"][provider] = {
+                "type": Option(provider_type, type=valid_stripped_string_not_empty),
+                **provider_class.get_plugin_options(),
+            }
 
 
 def _patch_dynamic_kvmd_gpio(raw_config: dict, _: Section, scheme: dict) -> None:
@@ -414,17 +418,15 @@ def _get_config_scheme() -> dict:
                     # Dynamic content
                 },
 
-                "oauth": {
-                    "enabled": Option(False, type=valid_bool),
-                    "providers": {
-                        # Dynamic content
-                    }
-                },
-
                 "totp": {
                     "secret": {
                         "file": Option("/etc/kvmd/totp.secret", type=valid_abs_path, if_empty=""),
                     },
+                },
+
+                "oauth": {
+                    "enabled":   Option(False, type=valid_bool),
+                    "providers": {},  # Dynamic content
                 },
             },
 

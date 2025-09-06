@@ -46,7 +46,7 @@ from ....logging import get_logger
 
 # =====
 _COOKIE_AUTH_TOKEN = "auth_token"
-_COOKIE_OAUTH_SESSION = "oauth-session"
+_COOKIE_OAUTH_SESSION = "oauth_session"
 
 
 async def _check_xhdr(auth_manager: AuthManager, _: HttpExposed, req: Request) -> bool:

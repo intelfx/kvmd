@@ -172,12 +172,7 @@ class AuthManager:  # pylint: disable=too-many-arguments,too-many-instance-attri
         assert self.__enabled
 
         if (await self.authorize(user, passwd)):
-            token = self.__make_new_token()
-            session = _Session(
-                user=user,
-                expire_ts=self.__make_expire_ts(expire),
-            )
-            self.__sessions[token] = session
+            session = self.__create_session(user, expire)
             get_logger(0).info("Logged in user %r; expire=%s, sessions_now=%d",
                                session.user,
                                self.__format_expire_ts(session.expire_ts),
@@ -196,17 +191,21 @@ class AuthManager:  # pylint: disable=too-many-arguments,too-many-instance-attri
         assert user
         assert self.__enabled
         assert self.oauth_manager
-        token = self.__make_new_token()
-        session = _Session(
-            user=user,
-            expire_ts=self.__make_expire_ts(0),
-        )
-        self.__sessions[token] = session
+        session = self.__create_session(user, 0)
         get_logger(0).info("Logged in via OAuth (user %r); expire=%s, sessions_now=%d",
                            session.user,
                            self.__format_expire_ts(session.expire_ts),
                            self.__get_sessions_number(session.user))
         return token
+
+    def __create_session(self, user: str, expire: int) -> _Session:
+        token = self.__make_new_token()
+        session = _Session(
+            user=user,
+            expire_ts=self.__make_expire_ts(expire),
+        )
+        self.__sessions[token] = session
+        return session
 
     def __make_new_token(self) -> str:
         for _ in range(10):
