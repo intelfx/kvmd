@@ -309,14 +309,20 @@ def _patch_dynamic_kvmd_auth(raw_config: dict, config: Section, scheme: dict) ->
         scheme["kvmd"]["auth"]["external"].update(
             get_auth_service_class(config.kvmd.auth.external.type).get_plugin_options()
         )
-    if config.kvmd.auth.oauth.enabled:
-        for (provider, params) in tools.rget(raw_config, "kvmd", "auth", "oauth", "providers").items():
-            provider_type = valid_stripped_string_not_empty(params.get("type", "oauth2"))
-            provider_class = get_oauth_provider_class(provider_type)
-            scheme["kvmd"]["auth"]["oauth"]["providers"][provider] = {
-                "type": Option(provider_type, type=valid_stripped_string_not_empty),
-                **provider_class.get_plugin_options(),
+    if config.kvmd.auth.flows:
+        for (flow, params) in tools.rget(raw_config, "kvmd", "auth", "flows").items():
+            scheme["kvmd"]["auth"]["flows"][flow] = {
+                "enabled":   Option(False, type=valid_bool),
+                "providers": {},  # Dynamic content
             }
+            if params.get("enabled"):
+                for (provider, params) in tools.rget(params, "providers").items():
+                    provider_type = valid_stripped_string_not_empty(params.get("type", "oauth2"))
+                    provider_class = get_oauth_provider_class(provider_type)
+                    scheme["kvmd"]["auth"]["flows"][flow]["providers"][provider] = {
+                        "type": Option(provider_type, type=valid_stripped_string_not_empty),
+                        **provider_class.get_plugin_options(),
+                    }
 
 
 def _patch_dynamic_kvmd_gpio(raw_config: dict, _: Section, scheme: dict) -> None:
@@ -422,6 +428,10 @@ def _get_config_scheme() -> dict:
                     "secret": {
                         "file": Option("/etc/kvmd/totp.secret", type=valid_abs_path, if_empty=""),
                     },
+                },
+
+                "flows": {
+                    # Dynamic content
                 },
 
                 "oauth": {

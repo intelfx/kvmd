@@ -28,10 +28,11 @@ from cryptography import fernet
 from cryptography.fernet import InvalidToken
 from yarl import URL
 
-from kvmd.plugins.oauth import BaseOAuthProvider, get_oauth_provider_class
+from . import BaseAuthFlowService
+from ..oauth import BaseOAuthProvider, get_oauth_provider_class
 
 
-class OAuthManager:
+class Plugin(BaseAuthFlowService):
     def __init__(
         self,
         oauth_providers: dict,
