@@ -23,15 +23,19 @@
 import os
 import tempfile
 import asyncio
+import functools
 import operator
 import contextlib
 import multiprocessing.queues
 import queue
 import shlex
 
-from typing import Generator
-from typing import TypeVar
 from typing import Any
+from typing import Callable
+from typing import Generator
+from typing import Iterable
+from typing import ParamSpec
+from typing import TypeVar
 
 
 # =====
@@ -138,3 +142,33 @@ def atomic_file_edit(path: str) -> Generator[str]:
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
+
+
+# =====
+Generated = TypeVar("Generated")
+Collection = TypeVar("Collection")
+Args = ParamSpec("Args")
+
+
+def collect(
+    typ: Callable[[Iterable[Generated]], Collection],
+) -> Callable[
+    [Callable[Args, Generator[Generated, None, None]]],
+    Callable[Args, Collection],
+]:
+    """
+    Decorates a generator function to collect its returned items into a specified collection type.
+
+    :param typ: A callable that takes an iterable of items of some type and returns
+                a collection of those items. Any reasonable collection type constructor
+                may be used, including built-in types such as ``list`` or ``dict``.
+    :type typ: Callable[[Iterable[Generated]], Collection]
+    """
+    def decorator(
+        fn: Callable[Args, Generator[Generated, None, None]]
+    ) -> Callable[Args, Collection]:
+        @functools.wraps(fn)
+        def wrapped(*args: Args.args, **kwargs: Args.kwargs) -> Collection:
+            return typ(fn(*args, **kwargs))
+        return wrapped
+    return decorator
