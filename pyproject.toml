@@ -1,0 +1,67 @@
+
+[project]
+# PEP 621 project metadata
+# See https://www.python.org/dev/peps/pep-0621/
+name = "kvmd"
+version = "4.176"
+description = "The main PiKVM daemon"
+readme = "README.md"
+authors = [
+    {name = "Maxim Devaev", email = "mdevaev@gmail.com"},
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: System :: Systems Administration",
+]
+license = {text = "GPLv3"}
+requires-python = ">=3.14"
+dependencies = ["pyyaml>=6.0.3", "ruamel-yaml>=0.19.1", "aiohttp>=3.13.3", "aiofiles>=25.1.0", "async-lru>=2.0.5", "passlib>=1.7.4", "pyotp>=2.9.0", "qrcode>=8.2", "pyserial>=3.5", "pyusb>=1.3.1", "pyudev>=0.24.4", "evdev>=1.9.2", "setproctitle>=1.3.7", "psutil>=7.2.1", "netifaces>=0.11.0", "systemd-python>=235", "dbus-python>=1.4.0", "dbus-next>=0.2.3", "pygments>=2.19.2", "pam>=0.2.0", "pillow>=12.1.0", "xlib>=0.21", "hidapi>=0.15.0", "python-ldap>=3.4.5", "zstandard>=0.25.0", "gpiod>=2.4.0", "luma-core>=2.5.3", "luma-oled>=3.14.0", "pyrad>=2.4", "spidev>=3.8", "pyghmi>=1.6.11", "pyserial-asyncio>=0.6", "mako>=1.3.10"]
+
+[project.urls]
+Homepage = "https://github.com/pikvm/kvmd"
+
+[project.scripts]
+kvmd = "kvmd.apps.kvmd:main"
+kvmd-media = "kvmd.apps.media:main"
+kvmd-nbd = "kvmd.apps.nbd:main"
+kvmd-pst = "kvmd.apps.pst:main"
+kvmd-pstrun = "kvmd.apps.pstrun:main"
+kvmd-otg = "kvmd.apps.otg:main"
+kvmd-otgnet = "kvmd.apps.otgnet:main"
+kvmd-otgmsd = "kvmd.apps.otgmsd:main"
+kvmd-otgconf = "kvmd.apps.otgconf:main"
+kvmd-htpasswd = "kvmd.apps.htpasswd:main"
+kvmd-totp = "kvmd.apps.totp:main"
+kvmd-edidconf = "kvmd.apps.edidconf:main"
+kvmd-override = "kvmd.apps.override:main"
+kvmd-ipmi = "kvmd.apps.ipmi:main"
+kvmd-vnc = "kvmd.apps.vnc:main"
+kvmd-localhid = "kvmd.apps.localhid:main"
+kvmd-nginx-mkconf = "kvmd.apps.ngxmkconf:main"
+kvmd-janus = "kvmd.apps.janus:main"
+kvmd-watchdog = "kvmd.apps.watchdog:main"
+kvmd-oled = "kvmd.apps.oled:main"
+kvmd-helper-pst-remount = "kvmd.helpers.remount:main"
+kvmd-helper-otgmsd-remount = "kvmd.helpers.remount:main"
+kvmd-helper-swapfiles = "kvmd.helpers.swapfiles:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+	"pytest",
+	"vulture",
+	"types-pyyaml>=6.0.12.20250915",
+	"types-aiofiles>=25.1.0.20251011",
+]
+all = [
+	{include-group = "dev"}
+]
