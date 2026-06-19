@@ -61,7 +61,12 @@ def valid_abs_path(arg: Any, type: str="", name: str="") -> str:  # pylint: disa
         except Exception as ex:
             raise_error(arg, f"{name}: {ex}")
         else:
-            if not getattr(stat, f"S_IS{type.upper()}")(st.st_mode):
+            if getattr(stat, f"S_IS{type.upper()}")(st.st_mode):
+                pass
+            elif type == "reg" and stat.S_ISCHR(st.st_mode) and st.st_rdev == os.makedev(1, 3):
+                # accept /dev/null in place of a regular file as an exception
+                pass
+            else:
                 raise_error(arg, name)
 
     return arg
