@@ -57,3 +57,8 @@ kvmd:
                         short_name: authentik
                         scope: profile openid email
                         username_attribute: preferred_username
+
+nbd:
+    server:
+        unix: "./nbd.sock"
+    device: "/dev/nbd0"
