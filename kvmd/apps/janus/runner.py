@@ -135,6 +135,7 @@ class JanusRunner:  # pylint: disable=too-many-instance-attributes
                 await asyncio.sleep(1)
 
     async def __start_janus_proc(self, netcfg: _Netcfg) -> None:
+        logger = get_logger(0)
         assert self.__janus_proc is None
         placeholders = {
             "o_stun_server": f"--stun-server={netcfg.stun_ip}:{netcfg.stun_port}",
@@ -152,6 +153,19 @@ class JanusRunner:  # pylint: disable=too-many-instance-attributes
             part.format(**placeholders)
             for part in cmd
         ]
+        if True:
+            # XXX: only pass -6 if we've seen IPv6 addresses but decided to use IPv4
+            logger.info(f"XXX: Enabling IPv6 for Janus")
+            cmd.extend([
+                "-6",
+            ])
+        if (netcfg.ext_ip and netcfg.ext_ip != netcfg.src_ip) or (netcfg.nat_type and netcfg.nat_type not in (StunNatType.ERROR, StunNatType.OPEN_INTERNET)):
+            logger.info(f"XXX: Enabling full-trickle for Janus (nat_type={netcfg.nat_type!r}, src-ip={netcfg.src_ip}, ext-ip={netcfg.ext_ip})")
+            cmd.extend([
+                # janus says: "slow gathering, are you using STUN or TURN for Janus too, instead of just for users? Consider enabling full-trickle instead"
+                # therefore, pass --full-trickle if we are behind NAT
+                "--full-trickle",
+            ])
         self.__janus_proc = await aioproc.run_process(
             cmd=cmd,
             env={"JANUS_USTREAMER_WEB_ICE_URL": f"stun:{netcfg.stun_host}:{netcfg.stun_port}"},
